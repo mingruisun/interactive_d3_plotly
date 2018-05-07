@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Bellybutton </title>
+</head>
+<body>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <select id="selDataset" onchange="optionChanged(this.value)"></select>
+
+    <div id='pie'></div>
+    <div id='bubble'></div>
+    <div>
+      <h4>sample metadata:</h4>
+      <ul id='meta'></ul></div>
+   
+
+    <script>
+        var url = '/names';
+          Plotly.d3.json(url,function(error,response) {
+              if (error) return console.warn(error);
+              var selDataset = document.getElementById("selDataset");
+              for (var i=0; i<response.length; i++) {
+                  var name_to_add = document.createElement('option');
+                  name_to_add.value = response[i];
+                  name_to_add.text = response[i];
+                  selDataset.appendChild(name_to_add);
+                  }
+          });
+
+        function optionChanged(value) {
+          
+          // console.log(value);
+          updatePlotly(value);
+        }
+
+        function updatePlotly(newdata){
+
+          var Pie = document.getElementById('pie');
+          var Bubble = document.getElementById('bubble');
+          var url = `/samples/${newdata}`;
+
+          Plotly.d3.json(url, function(error, response) {
+            if (error) return console.warn(error);
+
+            var new_data = response;
+            var sample_values_to_plot = new_data[0].sample_values.slice(0,10).map(x=>+x);
+            var otu_ids_as_labels = new_data[0].otu_ids.slice(0,10);
+
+            Plotly.restyle(Pie, 'values', [sample_values_to_plot])
+            Plotly.restyle(Pie, 'labels', [otu_ids_as_labels])
+
+            var sample_values_to_plot = new_data[0].sample_values.map(x=>+x);
+            var otu_ids_as_labels = new_data[0].otu_ids.map(x=>+x);
+            var updated_markers = [{
+                                size: sample_values_to_plot,
+                                color: otu_ids_as_labels
+                                }];
+
+            Plotly.restyle(Bubble, 'x', [otu_ids_as_labels])
+            Plotly.restyle(Bubble, 'y', [sample_values_to_plot])
+            Plotly.restyle(Bubble, 'markers', updated_markers)
+            
+            var url = `/metadata/${newdata}`;
+            var Metadata = document.getElementById('meta');
+            Metadata.innerHTML = '';
+            
+            Plotly.d3.json(url, function(error, response) {
+            if (error) return console.warn(error);
+            var data = response;
+            for (let [key, value] of Object.entries(response)) {
+                // console.log(key, value);
+                var li = document.createElement('li');
+                li.innerHTML=`${key} : ${value}`;
+                Metadata.appendChild(li);
+                  }
+          })
+          });
+
+        }
+
+        Plotly.d3.json('/otu', function(error, response){
+        var t=[];
+          for (let [key, value] of Object.entries(response)) {
+              t.push(value);
+                };
+
+        var url = '/samples/BB_940'
+        Plotly.d3.json(url, function(error, response) {
+          if (error) return console.warn(error);
+          var data = response;
+          // console.log(data);
+          var sample_values_to_plot = data[0].sample_values.slice(0,10).map(x=>+x);
+          var otu_ids_as_labels = data[0].otu_ids.slice(0,10);
+          var pie_data = [{
+                          values: sample_values_to_plot,
+                          hovertext:t,
+                          textposition: 'bottom',
+                          // hoverinfo: 'text',
+                          labels: otu_ids_as_labels,
+                          type: 'pie'
+                          }];
+          var pie_layout = {
+                            title: 'bellybutton pie chart',
+                            hovermode: 'closest'
+                            };
+          Plotly.plot('pie', pie_data, pie_layout);
+
+          var sample_values_to_plot = data[0].sample_values.map(x=>+x);
+          var otu_ids_as_labels = data[0].otu_ids.map(x=>+x);
+        
+          var bubble_data = [{
+                          x: otu_ids_as_labels,
+                          y: sample_values_to_plot,
+                          mode: 'markers',
+                          marker:{
+                            size: sample_values_to_plot,
+                            color: otu_ids_as_labels
+                          },
+                          text: t,
+                          textposition: 'bottom',
+                          type: 'scatter'
+                          }];
+          var bubble_layout = {
+                        title: 'bellybutton bubble chart',
+                        hovermode: 'closest'
+                        };
+          Plotly.plot('bubble', bubble_data, bubble_layout);
+
+          var url = '/metadata/BB_940';
+          var Metadata = document.getElementById('meta');
+          Plotly.d3.json(url, function(error, response) {
+            if (error) return console.warn(error);
+            var data = response;
+            for (let [key, value] of Object.entries(response)) {
+                // console.log(key, value);
+                var li = document.createElement('li');
+                li.innerHTML=`${key} : ${value}`;
+                Metadata.appendChild(li);
+                  };
+          });
+        });
+      });
+          </script>    
+
+</body>
+</html>
