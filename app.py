@@ -17,7 +17,7 @@ from flask import (
 #################################################
 # Database Setup
 #################################################
-engine = create_engine("sqlite:///DataSets/belly_button_biodiversity.sqlite")
+engine = create_engine("sqlite:///DataSets/belly_button_biodiversity.sqlite",connect_args={'check_same_thread': False}, echo=True)
 
 inspector = inspect(engine)
 
